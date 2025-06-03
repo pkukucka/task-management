@@ -1,37 +1,47 @@
 package com.jumpsoft.taskmanagement.dto.task;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.jumpsoft.taskmanagement.enums.TaskCategory;
+import java.time.LocalDate;
+
+import com.jumpsoft.taskmanagement.enums.BugSeverity;
 import com.jumpsoft.taskmanagement.enums.TaskStatus;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Size;
 
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "category"
-)
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = BugTaskCreateRequest.class, name = "BUG"),
-        @JsonSubTypes.Type(value = FeatureTaskCreateRequest.class, name = "FEATURE")
-})
+
 @Schema(description = "Represents a request to update a task in the system.")
-public interface TaskUpdateRequest {
-    @Schema(description = "Name of the task", example = "Fix login bug")
-    @Size(max = 100, message = "Task name must be at most 100 characters")
-    String getName();
+public record TaskUpdateRequest(
 
-    @Schema(description = "Detailed description of the task", example = "Resolve the issue causing 500 errors on login")
-    @Size(max = 500, message = "Task name must be at most 500 characters")
-    String getDescription();
+        @Schema(description = "Name of the task", example = "Add dark mode feature")
+        @Size(max = 100, message = "Task name must be at most 100 characters")
+        String name,
 
-    @Schema(description = "Current status of the task", example = "OPEN")
-    TaskStatus getStatus();
+        @Schema(description = "Detailed description of the task", example = "Implement dark mode across the application")
+        @Size(max = 500, message = "Task description must be at most 500 characters")
+        String description,
 
-    @Schema(description = "ID of the user who has assigned the task", example = "1")
-    Long getUserId();
+        @Schema(description = "Current status of the task", example = "OPEN")
+        TaskStatus status,
+
+        @Schema(description = "ID of the user who has assigned the task", example = "1")
+        Long userId,
+
+        @Schema(description = "The business value this feature will bring", example = "High user engagement")
+        @Size(max = 100, message = "Task description can be at most 500 characters")
+        String businessValue,
+
+        @Schema(description = "Deadline by which the feature should be completed", example = "2024-12-31", format = "yyyy-MM-dd")
+        @Future(message = "Deadline must be a future date")
+        LocalDate deadline,
+
+        @Schema(description = "Steps to reproduce the bug", example = "1. Navigate to login page, 2. Enter valid credentials, 3. Press the login button")
+        String reproduceSteps,
+
+        @Schema(description = "Severity level of the bug", example = "HIGH")
+        BugSeverity severity
+) {
 }
+
+

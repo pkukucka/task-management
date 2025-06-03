@@ -7,9 +7,13 @@ import com.jumpsoft.taskmanagement.dto.task.TaskUpdateRequest;
 import com.jumpsoft.taskmanagement.service.TaskService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.MethodParameter;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -111,20 +115,44 @@ public class TaskController {
             @PathVariable("id") Long id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Task information for update", required = true,
                     content = @Content(schema = @Schema(implementation = TaskUpdateRequest.class)))
-            @Valid @RequestBody TaskUpdateRequest taskRequest) throws CustomException {
-        Task updatedTask = taskService.updateTask(id, taskRequest);
-        return ResponseEntity.ok(updatedTask);
+            @Valid @RequestBody TaskUpdateRequest taskRequest) throws CustomException, MethodArgumentNotValidException {
+
+        try {
+            Task updatedTask = taskService.updateTask(id, taskRequest, updateTaskInvalidArguments -> {
+
+                BindingResult bindingResult = new BeanPropertyBindingResult(taskRequest, "TaskUpdateRequest");
+                updateTaskInvalidArguments.getArgNames().stream()
+                        .forEach(argName -> {
+                            bindingResult.rejectValue(argName, "invalid.argument",
+                                    "Field cannot be provided for category " + updateTaskInvalidArguments.getCategory());
+                        });
+                throw new MethodArgumentNotValidException(
+                        new MethodParameter(
+                                TaskController.class.getDeclaredMethod("updateTask", Long.class, TaskUpdateRequest.class),
+                                1
+                        ), bindingResult
+                );
+            });
+            return ResponseEntity.ok(updatedTask);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a task", description = "Delete a task based on its unique identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Task successfully deleted"),
+            @ApiResponse(responseCode = "404", description = "Task not found"),
     })
     public ResponseEntity<Void> deleteTask(
             @Parameter(description = "Unique identifier of the task to be deleted", example = "1", required = true)
             @PathVariable("id") Long id) {
-        taskService.deleteTask(id);
-        return ResponseEntity.noContent().build();
+        try {
+            taskService.deleteTask(id);
+            return ResponseEntity.noContent().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

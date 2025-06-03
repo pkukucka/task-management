@@ -1,7 +1,6 @@
-package  com.jumpsoft.taskmanagement.service;
+package com.jumpsoft.taskmanagement.util;
 
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Component;
 
 import com.jumpsoft.taskmanagement.enums.TaskStatus;
 import com.jumpsoft.taskmanagement.entity.Task;
@@ -10,7 +9,7 @@ import com.jumpsoft.taskmanagement.entity.Task;
  * Specification class for filtering tasks based on various criteria.
  * Provides methods to create specifications for task status and user ID.
  */
-@Component
+
 public class TaskSpecification {
 
     public static Specification<Task> withStatus(TaskStatus status) {

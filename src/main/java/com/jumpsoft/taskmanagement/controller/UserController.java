@@ -89,9 +89,14 @@ public class UserController {
     @Operation(summary = "Delete a user", description = "Remove a user by their unique identifier")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "User deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found")
     })
     public ResponseEntity<Void> deleteUser(@PathVariable("id") long id) {
+        try {
         userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+            return ResponseEntity.noContent().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

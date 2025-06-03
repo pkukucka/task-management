@@ -20,6 +20,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import com.jumpsoft.taskmanagement.dto.error.ResponseError;
 import com.jumpsoft.taskmanagement.dto.error.ResponseErrorItem;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
 /**

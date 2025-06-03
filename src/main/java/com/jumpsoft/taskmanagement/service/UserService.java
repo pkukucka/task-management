@@ -14,6 +14,7 @@ import com.jumpsoft.taskmanagement.dto.user.UserCreateRequest;
 import com.jumpsoft.taskmanagement.dto.user.User;
 import com.jumpsoft.taskmanagement.dto.user.UserUpdateRequest;
 import com.jumpsoft.taskmanagement.mapper.UserMapper;
+import com.jumpsoft.taskmanagement.repository.TaskRepository;
 import com.jumpsoft.taskmanagement.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -31,6 +32,9 @@ public class UserService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private TaskRepository taskRepository;
 
     /**
      * Retrieves a user by their unique identifier.
@@ -99,7 +103,14 @@ public class UserService {
      * @param id The ID of the user to delete.
      */
     @Transactional
-    public void deleteUser(Long id) {
+    public void deleteUser(Long id) throws EntityNotFoundException {
+
+        // Check if user exists first
+        if (!userRepository.existsById(id)) {
+            throw new EntityNotFoundException("User with id " + id + " not found");
+        }
+
+        taskRepository.updateUserIdInTasks(id, null);
         userRepository.deleteById(id);
     }
 }
