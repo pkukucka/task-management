@@ -1,0 +1,58 @@
+version: "3.8"
+
+name: taskmanagement
+
+networks:
+  taskmanagementnet:
+    name: taskmanagement
+    
+volumes:
+  postgresdata:
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_USERNAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=postgres
+      - TASKMANAGEMENT_DB=${TASKMANAGEMENT_DB}
+      - TASKMANAGEMENT_DB_USER=${TASKMANAGEMENT_DB_USER}
+      - TASKMANAGEMENT_DB_PASSWORD=${TASKMANAGEMENT_DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+      - ./db:/init
+    healthcheck:
+      test: ["CMD-SHELL", "-c", "/init/healthcheck.sh" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - taskmanagementnet
+  task-management:
+    image:  task-management:${PROJECT_VERSION}
+    environment:
+      JAVA_OPTS: >
+        -agentpath:/opt/jrebel/lib/libjrebel64.so -Drebel.remoting_plugin=true
+        -Xdebug
+        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5007
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/taskmanagement
+      SPRING_DATASOURCE_USERNAME: ${TASKMANAGEMENT_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${TASKMANAGEMENT_DB_PASSWORD}
+    ports:
+      - "8080:8080"
+      - "5007:5007"
+    healthcheck:
+      test: "curl --fail --silent task-management:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 20s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - taskmanagementnet
+    depends_on:
+      postgres:
+        condition: service_healthy
